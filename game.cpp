@@ -22,7 +22,13 @@ Game::~Game(){
 
 SDL_Surface* get_surface(char* image){
     SDL_Surface* tmpSurface;
+    SDL_Surface* optimized_surface;
     if(!(tmpSurface = SDL_LoadBMP(image))) SDL_Log("Couldn't get image surface of %s : %s", image, SDL_GetError()); 
+    else if (!(optimized_surface = SDL_ConvertSurface(tmpSurface, tmpSurface->format, 0))) {
+        SDL_Log("Couldn't optimize surface %s : %s", image, SDL_GetError());
+        SDL_FreeSurface(tmpSurface);
+        return optimized_surface;
+    }
     return tmpSurface;
 }
 
