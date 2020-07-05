@@ -7,7 +7,12 @@ int main(){
         SDL_Quit();
         return 1;
     }
-    SDL_Delay(5000);
+
+    while(game->isRunning()){
+    game->handleEvents();
+    game->update();
+    game->render();
+    }
 
     game->close();
 

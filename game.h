@@ -11,7 +11,11 @@ public:
     void render();
     void close();
     bool isRunning(){ return isActive;}
+    bool loadMedia(SDL_Surface* surface);
+    static SDL_Event event;
+
 private:
-    bool isActive;
+    bool isActive = true;
     SDL_Window* window;
+    SDL_Surface* wSurface ;
 };
