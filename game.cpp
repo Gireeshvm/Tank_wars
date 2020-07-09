@@ -1,25 +1,16 @@
 #include"game.h" 
 
-enum KeySurfaces{
-    KS_DEFAULT,
-    KS_LEFT,
-    KS_RIGHT,
-    KS_UP,
-    KS_DOWN,
-    KS_TOTAL
-};
-
-SDL_Surface* images[KS_TOTAL];
-SDL_Surface* current_image;
-
-
 SDL_Event Game::event;
 SDL_Renderer* Game::renderer;
+uint16_t Game::fps ;
+uint16_t Game::fpsCounter = 0;
 
 Game::Game(){
 }
 Game::~Game(){
 }
+
+uint32_t fpsMeter(uint32_t interval, void* params);
 
 SDL_Surface* get_surface(char* image){
     SDL_Surface* tmpSurface;
@@ -35,7 +26,7 @@ SDL_Surface* get_surface(char* image){
 
 bool Game::init(const char* title, int x, int y,int width, int height){
     int flags = 0;
-    if(SDL_Init(SDL_INIT_EVERYTHING)<0){
+    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_EVENTS)<0){
         SDL_Log("Unable to initialize: %s", SDL_GetError());
         return false;
     }
@@ -57,16 +48,22 @@ bool Game::init(const char* title, int x, int y,int width, int height){
         return false;
     }
 
-    images[KS_DEFAULT] = get_surface("../assets/press.bmp");
-    images[KS_UP] = get_surface("../assets/up.bmp");
-    images[KS_DOWN] = get_surface("../assets/down.bmp");
-    images[KS_RIGHT] = get_surface("../assets/right.bmp");
-    images[KS_LEFT] = get_surface("../assets/left.bmp");
-    current_image = images[KS_DEFAULT];
+
+    if( TTF_Init() < 0 ) {
+        SDL_Log("Couldn't initialize ttf library : %s", TTF_GetError());
+        return false;
+    }
+
+    fpsFont = TTF_OpenFont("../assets/roboto.ttf", 50);
+    if(!fpsFont) SDL_Log("Couldn't load fonts : %s", TTF_GetError());
+    textColor = {0, 0xFF, 0};
+    fpsTimer =  SDL_AddTimer(1000, fpsMeter, NULL);
+
     return true;
 }
 
 void Game::close(){
+    SDL_RemoveTimer(fpsTimer);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -76,25 +73,6 @@ void Game::close(){
 void Game::handleEvents(){
     while(SDL_PollEvent(&event)){
         if(event.type == SDL_QUIT) isActive = false;
-        else if(event.type == SDL_KEYDOWN){
-            switch(event.key.keysym.sym){
-                case SDLK_PERIOD:
-                    current_image = images[KS_UP];
-                    break;
-                case SDLK_e:
-                    current_image = images[KS_DOWN];
-                    break;
-                case SDLK_u:
-                    current_image = images[KS_RIGHT];
-                    break;
-                case SDLK_o:
-                    current_image = images[KS_LEFT];
-                    break;
-                default:
-                    current_image = images[KS_DEFAULT];
-                    break;
-            }
-        }
     }
 }
 
@@ -103,12 +81,14 @@ void Game::render(){
     SDL_RenderCopy(renderer, texture,NULL,NULL);
     SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0xFF, 0xFF);
     for(int i= 100; i < SCREEN_HEIGHT; i+=3) SDL_RenderDrawPoint(renderer, SCREEN_WIDTH/2, i);
+    drawFps();
     SDL_RenderPresent(renderer);
     SDL_DestroyTexture(texture);
 }
 
 void Game::update(){
     texture = loadTexture("../assets/press.bmp");
+    fpsCounter++;
 }
 
 SDL_Texture* Game::loadTexture(char* img){
@@ -121,4 +101,21 @@ SDL_Texture* Game::loadTexture(char* img){
         return tmpTexture;
     }
     return nullptr;
+}
+
+uint32_t fpsMeter(uint32_t interval, void* params){
+    Game::fps = Game::fpsCounter;
+    Game::fpsCounter = 0;
+    return 1000;
+}
+
+
+void Game::drawFps(){
+    SDL_Rect fpsRect = {SCREEN_WIDTH - 32, 0, 32, 32};
+    std::string fpsString = std::to_string(fps);
+    SDL_Surface* texSurface = TTF_RenderUTF8_Solid(fpsFont, fpsString.c_str(), textColor);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, texSurface);
+    SDL_FreeSurface(texSurface);
+    SDL_RenderCopy(renderer,textTexture, NULL, &fpsRect);
+
 }
