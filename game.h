@@ -7,6 +7,7 @@
 
 #define SCREEN_HEIGHT 600
 #define SCREEN_WIDTH 900
+#define REFRESH_TIME 1000/60
 
 class Game{
 public:

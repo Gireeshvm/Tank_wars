@@ -50,6 +50,7 @@ bool Game::init(const char* title, int x, int y,int width, int height){
         SDL_Log("Render Creation failed: %s", SDL_GetError());
         return false;
     }
+    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
     int imgFlags = IMG_INIT_PNG;
     if(!(IMG_Init(imgFlags) & imgFlags)){
         SDL_Log("sdl_image initialize failed: %s", IMG_GetError());
@@ -100,6 +101,8 @@ void Game::handleEvents(){
 void Game::render(){
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture,NULL,NULL);
+    SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0xFF, 0xFF);
+    for(int i= 100; i < SCREEN_HEIGHT; i+=3) SDL_RenderDrawPoint(renderer, SCREEN_WIDTH/2, i);
     SDL_RenderPresent(renderer);
     SDL_DestroyTexture(texture);
 }

@@ -9,11 +9,13 @@ int main(){
     }
 
     while(game->isRunning()){
-    game->handleEvents();
-    game->update();
-    game->render();
+        unsigned int frameStart = SDL_GetTicks();
+        game->handleEvents();
+        game->update();
+        game->render();
+        uint32_t frameTime = SDL_GetTicks() - frameStart;
+        if(frameTime < REFRESH_TIME ) SDL_Delay(REFRESH_TIME - frameTime);
     }
-
     game->close();
 
     return 0;
