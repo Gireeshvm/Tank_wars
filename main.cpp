@@ -3,7 +3,7 @@
 int main(){
     Game* game = new Game();
 
-    if(!game->init("Tank Wars", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 480, 800,false)){
+    if(!game->init("Tank Wars", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,SCREEN_WIDTH, SCREEN_HEIGHT)){
         SDL_Quit();
         return 1;
     }

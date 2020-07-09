@@ -14,6 +14,7 @@ SDL_Surface* current_image;
 
 
 SDL_Event Game::event;
+SDL_Renderer* Game::renderer;
 
 Game::Game(){
 }
@@ -23,7 +24,7 @@ Game::~Game(){
 SDL_Surface* get_surface(char* image){
     SDL_Surface* tmpSurface;
     SDL_Surface* optimized_surface;
-    if(!(tmpSurface = SDL_LoadBMP(image))) SDL_Log("Couldn't get image surface of %s : %s", image, SDL_GetError()); 
+    if(!(tmpSurface = IMG_Load(image))) SDL_Log("Couldn't get image surface of %s : %s", image, IMG_GetError()); 
     else if (!(optimized_surface = SDL_ConvertSurface(tmpSurface, tmpSurface->format, 0))) {
         SDL_Log("Couldn't optimize surface %s : %s", image, SDL_GetError());
         SDL_FreeSurface(tmpSurface);
@@ -32,7 +33,7 @@ SDL_Surface* get_surface(char* image){
     return tmpSurface;
 }
 
-bool Game::init(const char* title, int x, int y, int height, int width, bool fullscreen){
+bool Game::init(const char* title, int x, int y,int width, int height){
     int flags = 0;
     if(SDL_Init(SDL_INIT_EVERYTHING)<0){
         SDL_Log("Unable to initialize: %s", SDL_GetError());
@@ -44,7 +45,17 @@ bool Game::init(const char* title, int x, int y, int height, int width, bool ful
         SDL_Log("Unable to create Window: %s", SDL_GetError());
         return false;
     }
-    wSurface = SDL_GetWindowSurface(window);
+
+    if(!(renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED))){
+        SDL_Log("Render Creation failed: %s", SDL_GetError());
+        return false;
+    }
+    int imgFlags = IMG_INIT_PNG;
+    if(!(IMG_Init(imgFlags) & imgFlags)){
+        SDL_Log("sdl_image initialize failed: %s", IMG_GetError());
+        return false;
+    }
+
     images[KS_DEFAULT] = get_surface("../assets/press.bmp");
     images[KS_UP] = get_surface("../assets/up.bmp");
     images[KS_DOWN] = get_surface("../assets/down.bmp");
@@ -55,7 +66,7 @@ bool Game::init(const char* title, int x, int y, int height, int width, bool ful
 }
 
 void Game::close(){
-    SDL_FreeSurface(wSurface);
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     SDL_Log("Finishing game!!!");
@@ -66,16 +77,16 @@ void Game::handleEvents(){
         if(event.type == SDL_QUIT) isActive = false;
         else if(event.type == SDL_KEYDOWN){
             switch(event.key.keysym.sym){
-                case SDLK_UP:
+                case SDLK_PERIOD:
                     current_image = images[KS_UP];
                     break;
-                case SDLK_DOWN:
+                case SDLK_e:
                     current_image = images[KS_DOWN];
                     break;
-                case SDLK_RIGHT:
+                case SDLK_u:
                     current_image = images[KS_RIGHT];
                     break;
-                case SDLK_LEFT:
+                case SDLK_o:
                     current_image = images[KS_LEFT];
                     break;
                 default:
@@ -87,14 +98,24 @@ void Game::handleEvents(){
 }
 
 void Game::render(){
-    SDL_UpdateWindowSurface(window);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture,NULL,NULL);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture(texture);
 }
 
 void Game::update(){
-        if(!loadMedia(current_image)) SDL_Log("Couldn't Load Image: %s", SDL_GetError());
+    texture = loadTexture("../assets/press.bmp");
 }
 
-bool Game::loadMedia(SDL_Surface* img){
-    if(SDL_BlitSurface(img, NULL, wSurface, NULL) < 0) return false;
-    return true;
+SDL_Texture* Game::loadTexture(char* img){
+    SDL_Texture* tmpTexture;
+    SDL_Surface* imgSurface = IMG_Load(img);
+    if(!imgSurface)SDL_Log("Couldn't loadImage %s : %s ", img, IMG_GetError());
+    else{
+        tmpTexture = SDL_CreateTextureFromSurface(renderer, imgSurface);
+        SDL_FreeSurface(imgSurface);
+        return tmpTexture;
+    }
+    return nullptr;
 }

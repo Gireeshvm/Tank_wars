@@ -4,7 +4,7 @@ CC=g++
 
 COMPILER_FLAGS=-w
 
-LINKER_FLAGS=-lSDL2 
+LINKER_FLAGS=-lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_ttf
 
 OUT=run
 
